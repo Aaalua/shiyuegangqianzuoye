@@ -1,0 +1,102 @@
+item = {}
+
+
+ --
+
+-- item.itemName = ""
+-- item.id = 0
+-- item.num = 0
+-- item.info = ""
+-- item.image = 0
+-- item.flagParent = 0
+-- item.offset = Vector2.zero
+--[[
+function item:init(target)
+    self.itemName = "originName"
+    self.id = 0
+    self.num = 0
+    self.info = "originInfo"
+    self.image = nil
+    self.flagParent = nil
+    self.offset = Vector2.zero
+    local temp = target:AddComponent("Item")
+    temp.onBeginDrag:AddListener(
+        function(value)
+            self:_OnBeginDrag()
+        end
+    )
+    temp.onDrag:AddListener(
+        function(value)
+            self:_OnDrag()
+        end
+    )
+    temp.onEndDrag:AddListener(
+        function(value)
+            self:_OnEndDrag()
+        end
+    )
+    return target
+end
+
+function item:testcreateItem(target, parent)
+    target = item:init(target)
+    item:setParent(parent)
+    return self
+end
+
+function item:getParent()
+    if (self.flagParent == "nil") then
+        self.flagParent = self.transform.parent.gameObject
+    end
+    return self.flagParent
+end
+
+function item:setParent(value)
+    self.flagParent = value
+    self.transform:SetParent(value.transform)
+    print("---" .. value)
+    self.transform.position = self.parent.transform.position
+end
+
+function item:setPosition(pos)
+    self.transform.position = pos
+end
+
+-------------------------------trigger event-------------------------------
+function item:_OnBeginDrag(eventData)
+    local canvas = GameObject.Find("item_movePanel")
+    self.transform.SetParent(canvas.transform)
+    self.offset = Vector2(transform.position.x, transform.position.y) - eventData.position
+    self.transform.position = eventData.position + offset
+end
+
+function item:_OnDrag(eventData)
+    self.transform.position = eventData.position + self.offset
+    self.transform.GetComponent(Image).raycastTarget = false
+end
+function item:_OnEndDrag(eventData)
+    local go = eventData.pointerCurrentRaycast.gameObject
+    if (go == "nil") then
+        self:setParent(self:getParent())
+        self.transform.GetComponent(Image).raycastTarget = true
+        return
+    end
+
+    local container = go.GetComponent("ItemGrid")
+    local item1 = go.GetComponent("Item")
+
+    if (container ~= "nil") then
+        self:setParent(go)
+        container.Item = self
+    elseif (item1 ~= "nil") then
+        local swapParent = item1:getParent()
+        item1:setParent(self:getParent())
+        item1:getParent().GetComponent("ItemGrid").Item = self
+        self:setParent(swapParent)
+        self:getParent().GetComponent("ItemGrid").Item = item1
+    else
+        self:setParent(self:getParent())
+    end
+    self.transform.GetComponent(Image).raycastTarget = true
+end
+]] return item

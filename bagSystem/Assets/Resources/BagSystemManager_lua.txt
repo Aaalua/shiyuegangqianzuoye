@@ -1,0 +1,70 @@
+local bagSystemManager = {}
+
+bagSystemManager.bagSize = 15
+bagSystemManager.rowCount = 3
+bagSystemManager.itemGrids = {}
+bagSystemManager.bagRoot = nil
+bagSystemManager.content = nil
+bagSystemManager.topPanel = nil
+bagSystemManager.cellSize = 0
+bagSystemManager.item_script = {}
+
+-- local itemGrid = require("ItemGrid_lua")
+-- local item = require("Item_lua")
+
+function bagSystemManager:init()
+    print("=============bagSystemManager init start=============")
+    local bagSystem = Resources.Load("bagSystem")
+    bagSystem = GameObject.Instantiate(bagSystem, Vector3.zero, Quaternion.identity)
+    bagSystem.name = "bagSystem"
+    local root = GameObject.Find("Canvas")
+    bagSystem.transform:SetParent(root.transform)
+    bagSystem.transform.position = Vector2.zero
+    bagSystem:GetComponent(RectTransform).offsetMin = Vector2.zero
+    bagSystem:GetComponent(RectTransform).offsetMax = Vector2.zero
+    bagSystem:GetComponent(RectTransform).localScale = Vector3(1, 1, 1)
+    self.bagRoot = GameObject.Find("bagRoot")
+    self.content = GameObject.Find("content")
+    self.topPanel = GameObject.Find("item_movePanel")
+    self.cellSize = self.content:GetComponent("GridLayoutGroup").cellSize
+
+    -- self.item_script = require("Item_lua")
+    print("=============bagSystemManager init over=============")
+end
+
+function bagSystemManager:createBag(b, r)
+    print("=============bagSystemManager create bag=============")
+
+    self:setBagSize(b, r)
+    print("bagSize:" .. self.bagSize .. "  rowCount:" .. self.rowCount)
+    local go = Resources.Load("ItemGrid_prefab")
+    for i = 1, self.bagSize do
+        local go = GameObject.Instantiate(go, Vector3.zero, Quaternion.identity)
+        go.name = "ItemGrid_" .. i
+        go.transform:SetParent(self.content.transform)
+        go.transform.localScale = Vector3(1, 1, 1)
+        self.itemGrids[i] = go
+        -- print(
+        --     "itemGrids--" ..
+        --         self.itemGrids[i].name .. "--itemGrid_Name--" .. go.name .. "--itemGrid_parent:" .. self.content.name
+        -- )
+    end
+    self.content:GetComponent("GridLayoutGroup").constraintCount = self.rowCount
+    print("GridLayoutGroup rowCount:" .. self.rowCount)
+    local height = math.ceil(self.bagSize / self.rowCount) * (self.cellSize.y + 10)
+    print("height:" .. height)
+    self.bagRoot:GetComponent("ScrollRect").content.sizeDelta = Vector2(0, height)
+
+    print("======================添加 item 监听=================")
+    local itemTemp = Resources.Load("item_prefab")
+    local itemGo = GameObject.Instantiate(itemTemp, Vector3.zero, Quaternion.identity)
+    itemGo.name = "item_lua2instance"
+    itemGo:AddComponent("Item").OldParent = self.itemGrids[1]
+end
+
+function bagSystemManager:setBagSize(b, r)
+    self.bagSize = b
+    self.rowCount = r
+end
+
+return bagSystemManager
